@@ -1,0 +1,229 @@
+<!DOCTYPE HTML>
+<html lang="ru">
+<head>
+	<meta charset="UTF-8" />
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+	<title>Up to a million digits of pi</title>
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous" />
+
+	<style type="text/css">
+		body {
+			padding-top: 2em;
+		}
+		label {
+			font-family: serif;
+		}
+		button {
+			margin-left: 1em;
+		}
+		div.col {
+			margin-top: 2em;
+			word-break: break-all;
+		}
+		footer {
+			text-align: center;
+			color: silver;
+			border-top: 1px solid silver;
+			border-top: 1px solid rgba(0, 0, 0, 0.07);
+			margin-top: 5em;
+			padding-top: 1em;
+		}
+		footer a {
+			color: silver;
+		}
+	</style>
+</head>
+<body>
+
+<div class="container">
+	<form class="form-inline">
+		<div class="input-group">
+			<div class="input-group-prepend">
+				<label for="digits" class="input-group-text">&pi;</label>
+			</div>
+			<input type="number" name="digits" id="digits" min="0" max="1000000" step="100" value="100" class="form-control" />
+		</div>
+		<button class="btn btn-primary" id="copy">Copy</button>
+	</form>
+	<div class="row">
+		<div class="col" id="result"></div>
+	</div>
+</div>
+
+<footer>
+	<a href="https://maximals.ru" rel="nofollow, noopener">MaximAL</a>
+	of&nbsp;<a href="https://sijeko.ru" rel="nofollow, noopener">Sijeko</a>
+	for&nbsp;<a href="https://lazarev.me" rel="nofollow, noopener">Evgeniy Lazarev</a>
+	with&nbsp;❤
+</footer>
+
+<!-- Поехали! -->
+<script type="text/javascript">
+
+	// Ванилла
+	document.addEventListener('DOMContentLoaded', function() {
+
+		// Жёсткий, мужицкий стрикт
+		'use strict';
+
+		const inpDigits = document.getElementById('digits');
+		const btnCopy = document.getElementById('copy');
+		const divResult = document.getElementById('result');
+		let digits;
+
+		inpDigits.setAttribute('disabled', 'disabled');
+
+		// Поехали!
+		ajax('pi.txt', function (response) {
+			console.log(response);
+			digits = response.data;
+			inpDigits.removeAttribute('disabled');
+			onDigitsInput();
+		});
+
+		inpDigits.addEventListener('input', onDigitsInput);
+
+		function onDigitsInput() {
+			const value = parseInt(inpDigits.value);
+			if (value > 0) {
+				divResult.innerText = digits.substr(0, 2 + value);
+			} else {
+				divResult.innerText = digits.substr(0, 1);
+			}
+		}
+
+		btnCopy.addEventListener('click', function (event) {
+			copyTextToClipboard(divResult.innerText);
+			event.preventDefault();
+		});
+
+		function fallbackCopyTextToClipboard(text) {
+			let textArea = document.createElement("textarea");
+			textArea.value = text;
+			document.body.appendChild(textArea);
+			textArea.focus();
+			textArea.select();
+
+			try {
+				let successful = document.execCommand('copy');
+				let msg = successful ? 'successful' : 'unsuccessful';
+				console.log('Fallback: Copying text command was ' + msg);
+			} catch (err) {
+				console.error('Fallback: Oops, unable to copy', err);
+			}
+
+			document.body.removeChild(textArea);
+		}
+		function copyTextToClipboard(text) {
+			if (!navigator.clipboard) {
+				fallbackCopyTextToClipboard(text);
+				return;
+			}
+			navigator.clipboard.writeText(text).then(function() {
+				console.log('Async: Copying to clipboard was successful!');
+			}, function(err) {
+				console.error('Async: Could not copy text: ', err);
+			});
+		}
+	});
+
+	/**
+	 * Сделать Аякс
+	 *
+	 * @example
+	 * // GET
+	 * ajax('/api', function (response) {
+	 *     var data = response.data;
+	 *     // ...
+	 * }
+	 *
+	 * // PUT
+	 * ajax('/api', {method: 'PUT', data: {key: value}, function (response) {
+	 *     var data = response.data;
+	 *     // ...
+	 * }
+	 *
+	 * @param {String} url Урл
+	 * @param {Object|Function} params Объект вида `{method: method, async: true, data: data}`
+	 * @param {String} params.method HTTP-метод
+	 * @param {String|Object} params.data Данные для передачи
+	 * @param {Boolean} [params.async] Асинхронный вызов?
+	 * @param {Function} [params.onLoad] Что вызвать при загрузке
+	 * @param {Function} [params.onProgress] Что вызвать при изменении прогресса
+	 * @param {Function} [params.onError] Что вызвать при ошибке
+	 * @param {Function} [callback] Выполнить по завершению аякс-вызова
+	 *
+	 * @since 2016-10-24
+	 * @author MaximAL
+	 */
+	 function ajax(url, params, callback) {
+		if (!url) {
+			throw new Error('Error: `url` parameter is required!');
+		}
+
+		params = params || {};
+
+		if (params instanceof Function) {
+			callback = params;
+		}
+
+		var request = new XMLHttpRequest();
+
+		if (params.onProgress) {
+			request.onprogress = params.onProgress;
+		}
+
+		request.open(params.method ? params.method : 'GET', url, params.async ? params.async : true);
+
+		if (params.onLoad) {
+			request.onload = params.onLoad;
+		}
+
+		if (params.onError) {
+			request.onerror = params.onError;
+		}
+
+		request.onreadystatechange = function () {
+			if (request.readyState === 4) {
+				if (callback) {
+					var data;
+					try {
+						var type = request.getResponseHeader('Content-Type');
+						data = type.match(/^application\/json/i) ?
+							JSON.parse(request.response.toString()) :
+							request.response;
+					} catch (err) {
+						data = null;
+					}
+					callback({
+						ok: request.status >= 200 && request.status <= 299,
+						status: request.status,
+						statusText: request.statusText,
+						body: request.response,
+						data: data
+					});
+				}
+			}
+		};
+
+		//request.setRequestHeader('Content-Type', 'multipart/form-data');
+		request.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+		if (params.data) {
+			// String or JSON payload
+			//console.log(params.data instanceof String);
+			if (params.data instanceof String) {
+				request.send(params.data);
+			} else {
+				request.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
+				request.send(JSON.stringify(params.data));
+			}
+		} else {
+			request.send(null);
+		}
+	}
+</script>
+
+</body>
+</html>
