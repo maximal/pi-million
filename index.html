@@ -43,7 +43,7 @@
 			<div class="input-group-prepend">
 				<label for="digits" class="input-group-text">&pi;</label>
 			</div>
-			<input type="number" name="digits" id="digits" min="0" max="1000000" step="100" value="100" class="form-control" />
+			<input type="number" name="digits" id="digits" min="0" max="1000000" step="100" value="100" maxlength="7" class="form-control" />
 		</div>
 		<button class="btn btn-primary" id="copy">Copy</button>
 	</form>
@@ -79,7 +79,7 @@
 
 		// Поехали!
 		ajax('pi.txt', function (response) {
-			console.log(response);
+			//console.log(response);
 			digits = response.data;
 			inpDigits.removeAttribute('disabled');
 			onDigitsInput();
@@ -102,7 +102,7 @@
 		});
 
 		function fallbackCopyTextToClipboard(text) {
-			let textArea = document.createElement("textarea");
+			let textArea = document.createElement('textarea');
 			textArea.value = text;
 			document.body.appendChild(textArea);
 			textArea.focus();
